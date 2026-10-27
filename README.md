@@ -61,20 +61,53 @@ ur0:/tai/quickmenuminus.suprx
 </ul>
 <br>
 
- <h2>Building</h2>
+<h2>Building</h2>
 
-<p>Dependencies:</p>
+<p>Tested with VitaSDK 2026.08 (GCC 15.2.0) on Linux.</p>
+
+<h3>1. Install VitaSDK</h3>
+
+<p>Follow the instructions at <a href="https://vitasdk.org">vitasdk.org</a>, then make sure the environment is set:</p>
+
+<pre><code class="language-bash">export VITASDK=$HOME/vitasdk
+export PATH=$VITASDK/bin:$PATH
+</code></pre>
+
+<p>Install the taiHEN package:</p>
+
+<pre><code class="language-bash">vdpm install taihen
+</code></pre>
+
+<h3>2. Install the PAF headers</h3>
+
+<p>The module uses the <a href="https://github.com/VitaArchive/ScePaf-RE/tree/c-compat">ScePaf-RE (<code>c-compat</code> branch)</a> headers. Copy them into the SDK:</p>
+
+<pre><code class="language-bash">git clone -b c-compat https://github.com/VitaArchive/ScePaf-RE.git
+cp -r ScePaf-RE/include/* $VITASDK/arm-vita-eabi/include/
+</code></pre>
+
+<p>Then fix the include in <code>paf/std/wchar.h</code>, which points outside the SDK include path:</p>
+
+<pre><code class="language-bash">sed -i 's|#include &lt;../../wchar.h&gt;|#include &lt;stdarg.h&gt;\n#include &lt;stddef.h&gt;\n#include &lt;wchar.h&gt;|' \
+  $VITASDK/arm-vita-eabi/include/paf/std/wchar.h
+</code></pre>
+
+<h3>3. Build</h3>
+
+<pre><code class="language-bash">git clone https://github.com/arcomipiaceilseno/QuickMenuMinus.git
+cd QuickMenuMinus
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build
+</code></pre>
+
+<p>The module is created at <code>build/quickmenuminus.suprx</code>.</p>
+
+<h3>Notes</h3>
 <ul>
- <li><a href="https://vitasdk.org">VitaSDK</a></li>
- <li><a href="https://github.com/VitaArchive/ScePaf-RE/tree/c-compat">paf-RE</a></li>
+  <li><code>vita_missing.h</code> and <code>vita_missing.c</code> provide prototypes and import stubs for system functions that are not in the public VitaSDK headers or stub libraries (<code>sceShellUtilRequestColdReset</code>, <code>sceRegMgrUtilityGetInt</code>, <code>sceAVConfigGetVolCtrlEnable</code>, <code>sceAVConfigWriteRegSystemVol</code>, <code>vshPowerSetPsButtonPushTime</code>, <code>sceClibStrtoll</code> and some PAF functions). They were derived from the imports of a working build and are not official: if VitaSDK declares them in the future, these files can be removed.</li>
+  <li>The PAF functions are linked from <code>ScePaf_stub_weak</code>, plus the stubs defined in <code>vita_missing.c</code>.</li>
+  <li><code>-fshort-wchar</code> is required, because <code>wchar_t</code> is 16-bit on the Vita.</li>
 </ul>
-
-<p>Logging can be configured with CMake variables.</p>
-
-<p>To build dependencies and module:</p>
-
-<pre><code class="language-bash">cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build</code></pre>
 
 <h2>Contributing</h2>
 
